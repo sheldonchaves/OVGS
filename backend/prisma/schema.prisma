@@ -1,0 +1,163 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SalesOrderStatus {
+  CRIADA
+  PLANEJADA
+  AGENDADA
+  EM_TRANSPORTE
+  ENTREGUE
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         UserRole @default(USER)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  auditLogs AuditLog[]
+
+  @@map("users")
+}
+
+model Client {
+  id        String   @id @default(uuid())
+  name      String
+  document  String   @unique
+  email     String?
+  phone     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  authorizedTransports ClientTransport[]
+  salesOrders          SalesOrder[]
+
+  @@map("clients")
+}
+
+model TransportType {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  clients     ClientTransport[]
+  salesOrders SalesOrder[]
+
+  @@map("transport_types")
+}
+
+model ClientTransport {
+  clientId        String
+  transportTypeId String
+
+  client        Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  transportType TransportType @relation(fields: [transportTypeId], references: [id], onDelete: Cascade)
+
+  @@id([clientId, transportTypeId])
+  @@map("client_transports")
+}
+
+model Item {
+  id          String   @id @default(uuid())
+  sku         String   @unique
+  name        String
+  description String?
+  unit        String   @default("UN")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  salesOrderItems SalesOrderItem[]
+
+  @@map("items")
+}
+
+model SalesOrder {
+  id              String           @id @default(uuid())
+  code            String           @unique
+  clientId        String
+  transportTypeId String
+  status          SalesOrderStatus @default(CRIADA)
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  client        Client            @relation(fields: [clientId], references: [id])
+  transportType TransportType     @relation(fields: [transportTypeId], references: [id])
+  items         SalesOrderItem[]
+  schedule      DeliverySchedule?
+
+  @@index([status])
+  @@index([clientId])
+  @@index([transportTypeId])
+  @@index([createdAt])
+  @@map("sales_orders")
+}
+
+model SalesOrderItem {
+  id           String @id @default(uuid())
+  salesOrderId String
+  itemId       String
+  quantity     Int
+
+  salesOrder SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  item       Item       @relation(fields: [itemId], references: [id])
+
+  @@unique([salesOrderId, itemId])
+  @@map("sales_order_items")
+}
+
+model DeliverySchedule {
+  id           String   @id @default(uuid())
+  salesOrderId String   @unique
+  deliveryDate DateTime @db.Date
+  windowStart  String
+  windowEnd    String
+  confirmed    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  salesOrder SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+
+  @@index([deliveryDate])
+  @@map("delivery_schedules")
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  action        String
+  entityType    String
+  entityId      String
+  previousState Json?
+  newState      Json?
+  userId        String?
+  userEmail     String?
+  createdAt     DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([action])
+  @@map("audit_logs")
+}

@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ovgs-postgres
+    environment:
+      POSTGRES_USER: ovgs
+      POSTGRES_PASSWORD: ovgs
+      POSTGRES_DB: ovgs
+    ports:
+      - "5544:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ovgs -d ovgs"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+    container_name: ovgs-api
+    environment:
+      DATABASE_URL: postgresql://ovgs:ovgs@postgres:5432/ovgs?schema=public
+      PORT: 3000
+      JWT_SECRET: ovgs-dev-secret-change-in-production
+      JWT_EXPIRES_IN: 8h
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:3000/api
+    container_name: ovgs-web
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

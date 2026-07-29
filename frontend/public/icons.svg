@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="chevron-icon" viewBox="0 0 16 16">
+    <path fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m4 6 4 4 4-4"/>
+  </symbol>
+  <symbol id="close-icon" viewBox="0 0 16 16">
+    <path fill="none" stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" d="m4 4 8 8M12 4 4 12"/>
+  </symbol>
+  <symbol id="menu-icon" viewBox="0 0 16 16">
+    <path fill="none" stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" d="M3 4.5h10M3 8h10M3 11.5h10"/>
+  </symbol>
+  <symbol id="calendar-icon" viewBox="0 0 16 16">
+    <path fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M3.5 5.5h9v7h-9zM5.5 3.5v2M10.5 3.5v2M3.5 7.5h9"/>
+  </symbol>
+</svg>
